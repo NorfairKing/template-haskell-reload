@@ -13,7 +13,10 @@ library:
   source-dirs: src
   dependencies:
   - bytestring
+  - conduit
+  - containers
   - path
+  - path-io
   - template-haskell
   - text
 
@@ -27,6 +30,7 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - containers
     - hspec
     - path
     - template-haskell-reload

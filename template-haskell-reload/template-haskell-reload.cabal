@@ -28,7 +28,10 @@ library
   build-depends:
       base >=4.7 && <5
     , bytestring
+    , conduit
+    , containers
     , path
+    , path-io
     , template-haskell
     , text
   default-language: Haskell2010
@@ -46,6 +49,7 @@ test-suite template-haskell-reload-test
       hspec-discover:hspec-discover
   build-depends:
       base >=4.7 && <5
+    , containers
     , hspec
     , path
     , template-haskell-reload
