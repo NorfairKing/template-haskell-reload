@@ -1,0 +1,53 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.2.
+--
+-- see: https://github.com/sol/hpack
+
+name:           template-haskell-reload
+version:        0.0.0.0
+homepage:       https://github.com/NorfairKing/template-haskell-reload#readme
+bug-reports:    https://github.com/NorfairKing/template-haskell-reload/issues
+author:         Tom Sydney Kerckhove
+maintainer:     syd@cs-syd.eu
+copyright:      Copyright (c) 2020 Tom Sydney Kerckhove
+license:        AllRightsReserved
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/NorfairKing/template-haskell-reload
+
+library
+  exposed-modules:
+      Language.Haskell.TH.Reload
+  other-modules:
+      Paths_template_haskell_reload
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , path
+    , template-haskell
+    , text
+  default-language: Haskell2010
+
+test-suite template-haskell-reload-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Language.Haskell.TH.ReloadSpec
+      Paths_template_haskell_reload
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-tool-depends:
+      hspec-discover:hspec-discover
+  build-depends:
+      base >=4.7 && <5
+    , hspec
+    , path
+    , template-haskell-reload
+    , text
+  default-language: Haskell2010
