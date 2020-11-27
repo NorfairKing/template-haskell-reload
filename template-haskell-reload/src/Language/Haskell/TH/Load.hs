@@ -4,7 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Language.Haskell.TH.Reload
+module Language.Haskell.TH.Load
   ( -- * Core types
     LoadT (..),
     Load,

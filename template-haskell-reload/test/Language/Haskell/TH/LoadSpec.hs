@@ -2,21 +2,21 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Language.Haskell.TH.ReloadSpec (spec) where
+module Language.Haskell.TH.LoadSpec (spec) where
 
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Haskell.TH.Reload
+import Language.Haskell.TH.Load
 import Path
 import Test.Hspec
 
 thisFileBakedIn :: Load Text
-thisFileBakedIn = $$(embedReadTextFile BakeIn [relfile|test/Language/Haskell/TH/ReloadSpec.hs|])
+thisFileBakedIn = $$(embedReadTextFile BakeIn [relfile|test/Language/Haskell/TH/LoadSpec.hs|])
 
 thisFileLive :: Load Text
-thisFileLive = $$(embedReadTextFile LoadLive [relfile|test/Language/Haskell/TH/ReloadSpec.hs|])
+thisFileLive = $$(embedReadTextFile LoadLive [relfile|test/Language/Haskell/TH/LoadSpec.hs|])
 
 testDirBakedIn :: Load [Path Rel File]
 testDirBakedIn = $$(embedListDir BakeIn [reldir|test|])
@@ -38,36 +38,36 @@ spec = do
         loadMode thisFileBakedIn `shouldBe` BakeIn
       it "contains the module name" $ do
         contents <- load thisFileBakedIn
-        T.unpack contents `shouldContain` "Language.Haskell.TH.ReloadSpec"
+        T.unpack contents `shouldContain` "Language.Haskell.TH.LoadSpec"
     describe "Live" $ do
       it "is baked in" $ do
         loadMode thisFileLive `shouldBe` LoadLive
       it "contains the module name" $ do
         contents <- load thisFileLive
-        T.unpack contents `shouldContain` "Language.Haskell.TH.ReloadSpec"
+        T.unpack contents `shouldContain` "Language.Haskell.TH.LoadSpec"
   describe "embedListDir" $ do
     describe "Baked in" $ do
       it "is baked in" $ do
         loadMode testDirBakedIn `shouldBe` BakeIn
       it "contains this module" $ do
         files <- load testDirBakedIn
-        files `shouldContain` [[relfile|Language/Haskell/TH/ReloadSpec.hs|]]
+        files `shouldContain` [[relfile|Language/Haskell/TH/LoadSpec.hs|]]
     describe "Live" $ do
       it "is live" $ do
         loadMode testDirLive `shouldBe` LoadLive
       it "contains this module" $ do
         files <- load testDirLive
-        files `shouldContain` [[relfile|Language/Haskell/TH/ReloadSpec.hs|]]
+        files `shouldContain` [[relfile|Language/Haskell/TH/LoadSpec.hs|]]
   describe "embedTextFilesIn" $ do
     describe "Baked in" $ do
       it "is baked in" $ do
         loadMode testFilesBakedIn `shouldBe` BakeIn
       it "contains this module" $ do
         files <- load testFilesBakedIn
-        files `shouldSatisfy` (M.member [relfile|Language/Haskell/TH/ReloadSpec.hs|])
+        files `shouldSatisfy` (M.member [relfile|Language/Haskell/TH/LoadSpec.hs|])
     describe "Live" $ do
       it "is live" $ do
         loadMode testFilesLive `shouldBe` LoadLive
       it "contains this module" $ do
         files <- load testFilesLive
-        files `shouldSatisfy` (M.member [relfile|Language/Haskell/TH/ReloadSpec.hs|])
+        files `shouldSatisfy` (M.member [relfile|Language/Haskell/TH/LoadSpec.hs|])

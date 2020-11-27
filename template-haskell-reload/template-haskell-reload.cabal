@@ -20,7 +20,7 @@ source-repository head
 
 library
   exposed-modules:
-      Language.Haskell.TH.Reload
+      Language.Haskell.TH.Load
   other-modules:
       Paths_template_haskell_reload
   hs-source-dirs:
@@ -40,7 +40,7 @@ test-suite template-haskell-reload-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Language.Haskell.TH.ReloadSpec
+      Language.Haskell.TH.LoadSpec
       Paths_template_haskell_reload
   hs-source-dirs:
       test
