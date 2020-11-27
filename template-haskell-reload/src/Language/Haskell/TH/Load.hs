@@ -174,11 +174,12 @@ embedTextFilesIn = embedTextFilesInWith id [||id||] (flip const) [||flip const||
 -- === Example usage
 --
 -- To use this fun!ction, you need to bind both the key change function and the value change function to a name.
+-- Because of a staging restriction, these functions have to be defined in another module.
 -- Then you can use this function like so:
 --
--- > let keyFunc = ...
--- >     valFunc = ...
--- >  in $$(embedTextFilesInWith mode [reldir|content|] keyFunc [||keyFunc||] valFunc [||valFunc||]
+-- >  import MyModule (keyFunc, valFunc)
+-- >  files :: Load (Map A B)
+-- >  files = $$(embedTextFilesInWith mode [reldir|content|] keyFunc [||keyFunc||] valFunc [||valFunc||]
 embedTextFilesInWith ::
   (Ord a, Lift a, Lift b) =>
   -- | A function to change the key
