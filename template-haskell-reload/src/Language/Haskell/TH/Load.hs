@@ -105,6 +105,10 @@ loadMode = \case
 -- | Embed a text file
 --
 -- This will throw on a non-utf8 files
+--
+-- === Example usage
+--
+-- > $$(embedReadTextFile mode [relfile|src/Lib.hs|]
 embedReadTextFile :: Mode -> Path Rel File -> Q (TExp (Load Text))
 embedReadTextFile = \case
   LoadLive -> embedReadTextFileLive
@@ -130,6 +134,10 @@ embedReadTextFileBakedInRun fp = do
   pure textContents
 
 -- | Embed a directory, ignore hidden files and directories
+--
+-- === Example usage
+--
+-- > $$(embedListDir mode [reldir|src|]
 embedListDir :: Mode -> Path Rel Dir -> Q (TExp (Load [Path Rel File]))
 embedListDir = \case
   LoadLive -> embedListDirLive
@@ -150,32 +158,27 @@ embedListDirLive rd = [||Live $ embedListDirLiveRun rd||]
 embedListDirLiveRun :: Path Rel Dir -> IO [Path Rel File]
 embedListDirLiveRun rd = Conduit.sourceToList $ sourceFilesInNonHiddenDirsRecursively rd
 
-sourceFilesInNonHiddenDirsRecursively ::
-  forall m i.
-  MonadIO m =>
-  Path Rel Dir ->
-  ConduitT i (Path Rel File) m ()
-sourceFilesInNonHiddenDirsRecursively rd = do
-  here <- getCurrentDir
-  walkDirRel go $ here </> rd
-  where
-    go ::
-      Path Rel Dir ->
-      [Path Rel Dir] ->
-      [Path Rel File] ->
-      ConduitT i (Path Rel File) m (WalkAction Rel)
-    go curdir subdirs files = do
-      Conduit.yieldMany $
-        map (curdir </>) $
-          filter (not . hidden) files
-      pure $ WalkExclude $ filter (isHiddenIn curdir) subdirs
-
+-- | Embed a directory of text files
+--
+-- === Example usage
+--
+-- > $$(embedTextFilesInWith mode [reldir|content|])
 embedTextFilesIn ::
   Mode ->
   Path Rel Dir ->
   Q (TExp (Load (Map (Path Rel File) Text)))
 embedTextFilesIn = embedTextFilesInWith id [||id||] (flip const) [||flip const||]
 
+-- | Embed a directory of text files
+--
+-- === Example usage
+--
+-- To use this fun!ction, you need to bind both the key change function and the value change function to a name.
+-- Then you can use this function like so:
+--
+-- > let keyFunc = ...
+-- >     valFunc = ...
+-- >  in $$(embedTextFilesInWith mode [reldir|content|] keyFunc [||keyFunc||] valFunc [||valFunc||]
 embedTextFilesInWith ::
   (Ord a, Lift a, Lift b) =>
   -- | A function to change the key
@@ -208,6 +211,26 @@ embedTextFilesInWith keyFunc qKeyFunc valFunc qValFunc heated rd = case heated o
       val <- valFunc key <$> embedReadTextFileBakedInRun (rd </> file)
       pure (key, val)
     [||BakedIn $ M.fromList tups||]
+
+sourceFilesInNonHiddenDirsRecursively ::
+  forall m i.
+  MonadIO m =>
+  Path Rel Dir ->
+  ConduitT i (Path Rel File) m ()
+sourceFilesInNonHiddenDirsRecursively rd = do
+  here <- getCurrentDir
+  walkDirRel go $ here </> rd
+  where
+    go ::
+      Path Rel Dir ->
+      [Path Rel Dir] ->
+      [Path Rel File] ->
+      ConduitT i (Path Rel File) m (WalkAction Rel)
+    go curdir subdirs files = do
+      Conduit.yieldMany $
+        map (curdir </>) $
+          filter (not . hidden) files
+      pure $ WalkExclude $ filter (isHiddenIn curdir) subdirs
 
 hidden :: Path Rel File -> Bool
 hidden = goFile
