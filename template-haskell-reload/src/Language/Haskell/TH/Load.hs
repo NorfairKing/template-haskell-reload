@@ -15,6 +15,8 @@ module Language.Haskell.TH.Load
 
     -- ** Text files
     embedReadTextFile,
+
+    -- *** Auxiliary functions
     embedReadTextFileLive,
     embedReadTextFileLiveRun,
     embedReadTextFileBakedIn,
@@ -22,6 +24,8 @@ module Language.Haskell.TH.Load
 
     -- ** List directory
     embedListDir,
+
+    -- *** Auxiliary functions
     embedListDirLive,
     embedListDirLiveRun,
     embedListDirBakedIn,
@@ -35,7 +39,6 @@ where
 
 import Conduit
 import Control.Monad
-import Control.Monad.IO.Class
 import qualified Data.ByteString as SB
 import Data.List
 import Data.Map (Map)
@@ -65,6 +68,7 @@ instance Applicative f => Applicative (LoadT f) where
   Live mf <*> BakedIn a = Live $ ($ a) <$> mf
   Live mf <*> Live ma = Live $ mf <*> ma
 
+-- | This instance turns the second _BakedIn_ into a _Live_, so watch out.
 instance Monad m => Monad (LoadT m) where
   ra >>= f = case ra of
     BakedIn a -> f a
@@ -77,23 +81,30 @@ instance Monad m => Monad (LoadT m) where
 instance MonadIO m => MonadIO (LoadT m) where
   liftIO = Live . liftIO
 
+-- | Load a 'LoadT'. This runs a 'Live' action and uses 'pure' on a 'BakedIn' value.
 load :: Applicative m => LoadT m a -> m a
 load = \case
   Live action -> action
   BakedIn a -> pure a
 
+-- | Load a 'LoadT IO' in any 'MonadIO'.
+--
+-- If you just need the result in 'IO', you can use 'load' instead.
 loadIO :: MonadIO m => Load a -> m a
 loadIO = liftIO . load
 
 data Mode = LoadLive | BakeIn
   deriving (Show, Eq, Generic, Lift)
 
+-- | Check whether a value is baked-in or not.
 loadMode :: LoadT m a -> Mode
 loadMode = \case
   Live _ -> LoadLive
   BakedIn _ -> BakeIn
 
--- | Embed a text file, this will throw on a non-utf8 files
+-- | Embed a text file
+--
+-- This will throw on a non-utf8 files
 embedReadTextFile :: Mode -> Path Rel File -> Q (TExp (Load Text))
 embedReadTextFile = \case
   LoadLive -> embedReadTextFileLive
@@ -112,7 +123,7 @@ embedReadTextFileBakedIn fp = do
 
 embedReadTextFileBakedInRun :: Path Rel File -> Q Text
 embedReadTextFileBakedInRun fp = do
-  runIO $ putStrLn $ unwords ["Baking in file:", fromRelFile fp]
+  runIO $ putStrLn $ unwords ["Baking-in file:", fromRelFile fp]
   qAddDependentFile (fromRelFile fp)
   contents <- runIO (SB.readFile (fromRelFile fp))
   let textContents = TE.decodeUtf8 contents
@@ -126,7 +137,7 @@ embedListDir = \case
 
 embedListDirBakedIn :: Path Rel Dir -> Q (TExp (Load [Path Rel File]))
 embedListDirBakedIn rd = do
-  runIO $ putStrLn $ unwords ["Baking in directory:", fromRelDir rd]
+  runIO $ putStrLn $ unwords ["Baking-in directory:", fromRelDir rd]
   cts <- embedListDirBakedInRun rd
   [||BakedIn cts||]
 
@@ -167,11 +178,16 @@ embedTextFilesIn = embedTextFilesInWith id [||id||] (flip const) [||flip const||
 
 embedTextFilesInWith ::
   (Ord a, Lift a, Lift b) =>
+  -- | A function to change the key
   (Path Rel File -> a) ->
+  -- | An expression for that same function to change the key
   Q (TExp (Path Rel File -> a)) ->
+  -- | An expression to change the value
   (a -> Text -> b) ->
+  -- | An expression for that same function to change the value
   Q (TExp (a -> Text -> b)) ->
   Mode ->
+  -- | The directory to load
   Path Rel Dir ->
   Q (TExp (Load (Map a b)))
 embedTextFilesInWith keyFunc qKeyFunc valFunc qValFunc heated rd = case heated of
@@ -197,7 +213,7 @@ hidden :: Path Rel File -> Bool
 hidden = goFile
   where
     goFile :: Path Rel File -> Bool
-    goFile f = isHiddenIn (parent f) f
+    goFile f = isHiddenIn (parent f) f || goDir (parent f)
     goDir :: Path Rel Dir -> Bool
     goDir f
       | parent f == f = False
