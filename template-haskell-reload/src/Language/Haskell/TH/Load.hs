@@ -15,6 +15,7 @@ module Language.Haskell.TH.Load
 
     -- ** Text files
     embedReadTextFile,
+    embedReadTextFileWith,
 
     -- *** Auxiliary functions
     embedReadTextFileLive,
@@ -110,9 +111,21 @@ loadMode = \case
 --
 -- > $$(embedReadTextFile mode [relfile|src/Lib.hs|]
 embedReadTextFile :: Mode -> Path Rel File -> Q (TExp (Load Text))
-embedReadTextFile = \case
-  LoadLive -> embedReadTextFileLive
-  BakeIn -> embedReadTextFileBakedIn
+embedReadTextFile = embedReadTextFileWith id [||id||]
+
+-- | Embed a text file
+embedReadTextFileWith :: Lift a => (Text -> a) -> Q (TExp (Text -> a)) -> Mode -> Path Rel File -> Q (TExp (Load a))
+embedReadTextFileWith func qFunc mode fp = case mode of
+  LoadLive ->
+    [||
+    Live $ do
+      t <- embedReadTextFileLiveRun fp
+      pure $ $$(qFunc) t
+    ||]
+  BakeIn -> do
+    t <- embedReadTextFileBakedInRun fp
+    let res = func t
+    [||BakedIn res||]
 
 embedReadTextFileLive :: Path Rel File -> Q (TExp (Load Text))
 embedReadTextFileLive fp = [||Live $ embedReadTextFileLiveRun fp||]
@@ -173,7 +186,7 @@ embedTextFilesIn = embedTextFilesInWith id [||id||] (flip const) [||flip const||
 --
 -- === Example usage
 --
--- To use this fun!ction, you need to bind both the key change function and the value change function to a name.
+-- To use this function, you need to bind both the key change function and the value change function to a name.
 -- Because of a staging restriction, these functions have to be defined in another module.
 -- Then you can use this function like so:
 --
@@ -194,7 +207,7 @@ embedTextFilesInWith ::
   -- | The directory to load
   Path Rel Dir ->
   Q (TExp (Load (Map a b)))
-embedTextFilesInWith keyFunc qKeyFunc valFunc qValFunc heated rd = case heated of
+embedTextFilesInWith keyFunc qKeyFunc valFunc qValFunc mode rd = case mode of
   LoadLive ->
     [||
     Live $ do
