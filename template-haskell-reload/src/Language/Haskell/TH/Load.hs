@@ -110,11 +110,11 @@ loadMode = \case
 -- === Example usage
 --
 -- > $$(embedReadTextFile mode [relfile|src/Lib.hs|]
-embedReadTextFile :: Mode -> Path Rel File -> Q (TExp (Load Text))
+embedReadTextFile :: Mode -> Path Rel File -> Code Q (Load Text)
 embedReadTextFile = embedReadTextFileWith id [||id||]
 
 -- | Embed a text file
-embedReadTextFileWith :: Lift a => (Text -> a) -> Q (TExp (Text -> a)) -> Mode -> Path Rel File -> Q (TExp (Load a))
+embedReadTextFileWith :: Lift a => (Text -> a) -> Code Q (Text -> a) -> Mode -> Path Rel File -> Code Q (Load a)
 embedReadTextFileWith func qFunc mode fp = case mode of
   LoadLive ->
     [||
@@ -122,21 +122,21 @@ embedReadTextFileWith func qFunc mode fp = case mode of
       t <- embedReadTextFileLiveRun fp
       pure $ $$(qFunc) t
     ||]
-  BakeIn -> do
+  BakeIn -> Code $ do
     t <- embedReadTextFileBakedInRun fp
     let res = func t
-    [||BakedIn res||]
+    examineCode [||BakedIn res||]
 
-embedReadTextFileLive :: Path Rel File -> Q (TExp (Load Text))
+embedReadTextFileLive :: Path Rel File -> Code Q (Load Text)
 embedReadTextFileLive fp = [||Live $ embedReadTextFileLiveRun fp||]
 
 embedReadTextFileLiveRun :: Path Rel File -> IO Text
 embedReadTextFileLiveRun fp = TE.decodeUtf8 <$> (SB.readFile (fromRelFile fp))
 
-embedReadTextFileBakedIn :: Path Rel File -> Q (TExp (Load Text))
-embedReadTextFileBakedIn fp = do
+embedReadTextFileBakedIn :: Path Rel File -> Code Q (Load Text)
+embedReadTextFileBakedIn fp = Code $ do
   cts <- embedReadTextFileBakedInRun fp
-  [||BakedIn cts||]
+  examineCode [||BakedIn cts||]
 
 embedReadTextFileBakedInRun :: Path Rel File -> Q Text
 embedReadTextFileBakedInRun fp = do
@@ -151,21 +151,21 @@ embedReadTextFileBakedInRun fp = do
 -- === Example usage
 --
 -- > $$(embedListDir mode [reldir|src|]
-embedListDir :: Mode -> Path Rel Dir -> Q (TExp (Load [Path Rel File]))
+embedListDir :: Mode -> Path Rel Dir -> Code Q (Load [Path Rel File])
 embedListDir = \case
   LoadLive -> embedListDirLive
   BakeIn -> embedListDirBakedIn
 
-embedListDirBakedIn :: Path Rel Dir -> Q (TExp (Load [Path Rel File]))
-embedListDirBakedIn rd = do
+embedListDirBakedIn :: Path Rel Dir -> Code Q (Load [Path Rel File])
+embedListDirBakedIn rd = Code $ do
   runIO $ putStrLn $ unwords ["Baking-in directory:", fromRelDir rd]
   cts <- embedListDirBakedInRun rd
-  [||BakedIn cts||]
+  examineCode [||BakedIn cts||]
 
 embedListDirBakedInRun :: Path Rel Dir -> Q [Path Rel File]
 embedListDirBakedInRun rd = runIO $ Conduit.sourceToList $ sourceFilesInNonHiddenDirsRecursively rd
 
-embedListDirLive :: Path Rel Dir -> Q (TExp (Load [Path Rel File]))
+embedListDirLive :: Path Rel Dir -> Code Q (Load [Path Rel File])
 embedListDirLive rd = [||Live $ embedListDirLiveRun rd||]
 
 embedListDirLiveRun :: Path Rel Dir -> IO [Path Rel File]
@@ -179,7 +179,7 @@ embedListDirLiveRun rd = Conduit.sourceToList $ sourceFilesInNonHiddenDirsRecurs
 embedTextFilesIn ::
   Mode ->
   Path Rel Dir ->
-  Q (TExp (Load (Map (Path Rel File) Text)))
+  Code Q (Load (Map (Path Rel File) Text))
 embedTextFilesIn = embedTextFilesInWith id [||id||] (flip const) [||flip const||]
 
 -- | Embed a directory of text files
@@ -198,15 +198,15 @@ embedTextFilesInWith ::
   -- | A function to change the key
   (Path Rel File -> a) ->
   -- | An expression for that same function to change the key
-  Q (TExp (Path Rel File -> a)) ->
+  Code Q (Path Rel File -> a) ->
   -- | An expression to change the value
   (a -> Text -> b) ->
   -- | An expression for that same function to change the value
-  Q (TExp (a -> Text -> b)) ->
+  Code Q (a -> Text -> b) ->
   Mode ->
   -- | The directory to load
   Path Rel Dir ->
-  Q (TExp (Load (Map a b)))
+  Code Q (Load (Map a b))
 embedTextFilesInWith keyFunc qKeyFunc valFunc qValFunc mode rd = case mode of
   LoadLive ->
     [||
@@ -218,13 +218,13 @@ embedTextFilesInWith keyFunc qKeyFunc valFunc qValFunc mode rd = case mode of
         pure (key, val)
       pure $ M.fromList tups
     ||]
-  BakeIn -> do
+  BakeIn -> Code $ do
     files <- embedListDirBakedInRun rd
     tups <- forM files $ \file -> do
       let key = keyFunc file
       val <- valFunc key <$> embedReadTextFileBakedInRun (rd </> file)
       pure (key, val)
-    [||BakedIn $ M.fromList tups||]
+    examineCode [||BakedIn $ M.fromList tups||]
 
 sourceFilesInNonHiddenDirsRecursively ::
   forall m i.
