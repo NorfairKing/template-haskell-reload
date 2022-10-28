@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.2.
+-- This file has been generated from package.yaml by hpack version 0.35.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -10,8 +10,8 @@ homepage:       https://github.com/NorfairKing/template-haskell-reload#readme
 bug-reports:    https://github.com/NorfairKing/template-haskell-reload/issues
 author:         Tom Sydney Kerckhove
 maintainer:     syd@cs-syd.eu
-copyright:      Copyright (c) 2020 Tom Sydney Kerckhove
-license:        AllRightsReserved
+copyright:      Copyright (c) 2020-2022 Tom Sydney Kerckhove
+license:        MIT
 build-type:     Simple
 
 source-repository head

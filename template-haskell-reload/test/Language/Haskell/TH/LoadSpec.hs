@@ -64,10 +64,10 @@ spec = do
         loadMode testFilesBakedIn `shouldBe` BakeIn
       it "contains this module" $ do
         files <- load testFilesBakedIn
-        files `shouldSatisfy` (M.member [relfile|Language/Haskell/TH/LoadSpec.hs|])
+        files `shouldSatisfy` M.member [relfile|Language/Haskell/TH/LoadSpec.hs|]
     describe "Live" $ do
       it "is live" $ do
         loadMode testFilesLive `shouldBe` LoadLive
       it "contains this module" $ do
         files <- load testFilesLive
-        files `shouldSatisfy` (M.member [relfile|Language/Haskell/TH/LoadSpec.hs|])
+        files `shouldSatisfy` M.member [relfile|Language/Haskell/TH/LoadSpec.hs|]

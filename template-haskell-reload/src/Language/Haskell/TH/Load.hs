@@ -131,7 +131,7 @@ embedReadTextFileLive :: Path Rel File -> Code Q (Load Text)
 embedReadTextFileLive fp = [||Live $ embedReadTextFileLiveRun fp||]
 
 embedReadTextFileLiveRun :: Path Rel File -> IO Text
-embedReadTextFileLiveRun fp = TE.decodeUtf8 <$> (SB.readFile (fromRelFile fp))
+embedReadTextFileLiveRun fp = TE.decodeUtf8 <$> SB.readFile (fromRelFile fp)
 
 embedReadTextFileBakedIn :: Path Rel File -> Code Q (Load Text)
 embedReadTextFileBakedIn fp = Code $ do
@@ -180,7 +180,7 @@ embedTextFilesIn ::
   Mode ->
   Path Rel Dir ->
   Code Q (Load (Map (Path Rel File) Text))
-embedTextFilesIn = embedTextFilesInWith id [||id||] (flip const) [||flip const||]
+embedTextFilesIn = embedTextFilesInWith id [||id||] (const id) [||const id||]
 
 -- | Embed a directory of text files
 --
