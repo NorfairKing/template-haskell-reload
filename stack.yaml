@@ -1,3 +1,7 @@
-resolver: lts-19.6
+resolver: lts-20.23
 packages:
 - template-haskell-reload
+system-ghc: true
+nix:
+  enable: false
+with-hpack: hpack

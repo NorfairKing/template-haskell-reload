@@ -1,21 +1,22 @@
 {
   description = "template-haskell-reload";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-22.05";
-    flake-utils.url = "github:numtide/flake-utils";
+    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-23.05";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
+    nixpkgs-22_11.url = "github:NixOS/nixpkgs?ref=nixos-22.11";
     nixpkgs-22_05.url = "github:NixOS/nixpkgs?ref=nixos-22.05";
   };
 
   outputs =
     { self
     , nixpkgs
+    , nixpkgs-22_11
     , nixpkgs-22_05
     , flake-utils
     , pre-commit-hooks
     }:
-    flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
     let
+      system = "x86_64-linux";
       pkgsFor = nixpkgs: import nixpkgs {
         inherit system;
         overlays = [
@@ -25,15 +26,16 @@
       pkgs = pkgsFor nixpkgs;
     in
     {
-      overlays = import ./nix/overlay.nix;
-      packages.default = pkgs.haskellPackages.template-haskell-reload;
-      checks =
+      overlays.${system} = import ./nix/overlay.nix;
+      packages.${system}.default = pkgs.haskellPackages.template-haskell-reload;
+      checks.${system} =
         let
           backwardCompatibilityCheckFor = nixpkgs:
             let pkgs' = pkgsFor nixpkgs;
             in pkgs'.haskellPackages.template-haskell-reload;
           allNixpkgs = {
             inherit
+              nixpkgs-22_11
               nixpkgs-22_05;
           };
           backwardCompatibilityChecks = pkgs.lib.mapAttrs (_: nixpkgs: backwardCompatibilityCheckFor nixpkgs) allNixpkgs;
@@ -51,7 +53,7 @@
             };
           };
         };
-      devShells.default = pkgs.haskellPackages.shellFor {
+      devShells.${system}.default = pkgs.haskellPackages.shellFor {
         name = "template-haskell-reload-shell";
         packages = p: with p; [
           template-haskell-reload
@@ -72,5 +74,5 @@
           ]);
         shellHook = self.checks.${system}.pre-commit.shellHook;
       };
-    });
+    };
 }
