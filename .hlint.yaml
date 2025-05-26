@@ -1,0 +1,6 @@
+- ignore:
+    name: "Redundant bracket"
+# Until this we use a version of hlint that has this issue fixed:
+# https://github.com/ndmitchell/hlint/issues/1557
+- ignore:
+    name: "Unused LANGUAGE pragma"

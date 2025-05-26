@@ -57,12 +57,12 @@ type Load a = LoadT IO a
 data LoadT m a = Live (m a) | BakedIn a
   deriving (Generic, Lift)
 
-instance Functor f => Functor (LoadT f) where
+instance (Functor f) => Functor (LoadT f) where
   fmap f = \case
     Live ioa -> Live $ f <$> ioa
     BakedIn a -> BakedIn $ f a
 
-instance Applicative f => Applicative (LoadT f) where
+instance (Applicative f) => Applicative (LoadT f) where
   pure = BakedIn
   BakedIn f <*> BakedIn a = BakedIn $ f a
   BakedIn f <*> Live ma = Live $ f <$> ma
@@ -70,7 +70,7 @@ instance Applicative f => Applicative (LoadT f) where
   Live mf <*> Live ma = Live $ mf <*> ma
 
 -- | This instance turns the second _BakedIn_ into a _Live_, so watch out.
-instance Monad m => Monad (LoadT m) where
+instance (Monad m) => Monad (LoadT m) where
   ra >>= f = case ra of
     BakedIn a -> f a
     Live ma -> Live $ do
@@ -79,11 +79,11 @@ instance Monad m => Monad (LoadT m) where
         Live b -> b
         BakedIn b -> pure b
 
-instance MonadIO m => MonadIO (LoadT m) where
+instance (MonadIO m) => MonadIO (LoadT m) where
   liftIO = Live . liftIO
 
 -- | Load a 'LoadT'. This runs a 'Live' action and uses 'pure' on a 'BakedIn' value.
-load :: Applicative m => LoadT m a -> m a
+load :: (Applicative m) => LoadT m a -> m a
 load = \case
   Live action -> action
   BakedIn a -> pure a
@@ -91,7 +91,7 @@ load = \case
 -- | Load a 'LoadT IO' in any 'MonadIO'.
 --
 -- If you just need the result in 'IO', you can use 'load' instead.
-loadIO :: MonadIO m => Load a -> m a
+loadIO :: (MonadIO m) => Load a -> m a
 loadIO = liftIO . load
 
 data Mode = LoadLive | BakeIn
@@ -114,7 +114,7 @@ embedReadTextFile :: Mode -> Path Rel File -> Code Q (Load Text)
 embedReadTextFile = embedReadTextFileWith id [||id||]
 
 -- | Embed a text file
-embedReadTextFileWith :: Lift a => (Text -> a) -> Code Q (Text -> a) -> Mode -> Path Rel File -> Code Q (Load a)
+embedReadTextFileWith :: (Lift a) => (Text -> a) -> Code Q (Text -> a) -> Mode -> Path Rel File -> Code Q (Load a)
 embedReadTextFileWith func qFunc mode fp = case mode of
   LoadLive ->
     [||
@@ -228,7 +228,7 @@ embedTextFilesInWith keyFunc qKeyFunc valFunc qValFunc mode rd = case mode of
 
 sourceFilesInNonHiddenDirsRecursively ::
   forall m i.
-  MonadIO m =>
+  (MonadIO m) =>
   Path Rel Dir ->
   ConduitT i (Path Rel File) m ()
 sourceFilesInNonHiddenDirsRecursively rd = do

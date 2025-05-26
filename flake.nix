@@ -1,20 +1,19 @@
 {
   description = "template-haskell-reload";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-23.11";
+    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-25.05";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
-    nixpkgs-23_05.url = "github:NixOS/nixpkgs?ref=nixos-23.05";
-    nixpkgs-22_11.url = "github:NixOS/nixpkgs?ref=nixos-22.11";
-    nixpkgs-22_05.url = "github:NixOS/nixpkgs?ref=nixos-22.05";
+    nixpkgs-24_11.url = "github:NixOS/nixpkgs?ref=nixos-24.11";
+    nixpkgs-24_05.url = "github:NixOS/nixpkgs?ref=nixos-24.05";
+    nixpkgs-23_11.url = "github:NixOS/nixpkgs?ref=nixos-23.11";
   };
 
   outputs =
     { self
     , nixpkgs
-    , nixpkgs-23_05
-    , nixpkgs-22_11
-    , nixpkgs-22_05
-    , flake-utils
+    , nixpkgs-24_11
+    , nixpkgs-24_05
+    , nixpkgs-23_11
     , pre-commit-hooks
     }:
     let
@@ -37,9 +36,9 @@
             in pkgs'.haskellPackages.template-haskell-reload;
           allNixpkgs = {
             inherit
-              nixpkgs-23_05
-              nixpkgs-22_11
-              nixpkgs-22_05;
+              nixpkgs-24_11
+              nixpkgs-24_05
+              nixpkgs-23_11;
           };
           backwardCompatibilityChecks = pkgs.lib.mapAttrs (_: nixpkgs: backwardCompatibilityCheckFor nixpkgs) allNixpkgs;
         in
