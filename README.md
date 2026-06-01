@@ -1,5 +1,7 @@
 # Template haskell reload
 
+[![NixCI](https://staging.nix-ci.com/badge/gh:NorfairKing:template-haskell-reload)](https://staging.nix-ci.com/gh:NorfairKing:template-haskell-reload)
+
 Reload during development, bake into the binary in production.
 
 See this blogpost for more info:
